@@ -27,6 +27,7 @@ import xff.arthasx.ctrl.AttachProperties;
  *
  */
 @Controller
+@RequestMapping("ui/v1/arthasx")
 public class AttachController extends BaseController {
 
 	@Autowired

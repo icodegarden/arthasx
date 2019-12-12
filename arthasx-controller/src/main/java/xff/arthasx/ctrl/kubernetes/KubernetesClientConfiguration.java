@@ -2,10 +2,10 @@ package xff.arthasx.ctrl.kubernetes;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.apis.CoreV1Api;
+import io.kubernetes.client.openapi.Configuration;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.util.Config;
 
 /**
@@ -13,14 +13,14 @@ import io.kubernetes.client.util.Config;
  * @author Fangfang.Xu
  *
  */
-@Configuration
+@org.springframework.context.annotation.Configuration
 public class KubernetesClientConfiguration {
 
 	@ConditionalOnProperty(value = "arthasx.kubernetes.config.client", havingValue = "default", matchIfMissing = true)
 	@Bean
 	public ApiClient defaultClient() throws Exception {
 		ApiClient client = Config.defaultClient();
-		io.kubernetes.client.Configuration.setDefaultApiClient(client);
+		Configuration.setDefaultApiClient(client);
 		return client;
 	}
 
@@ -29,7 +29,7 @@ public class KubernetesClientConfiguration {
 	public ApiClient fromConfig() throws Exception {
 		ApiClient client = Config
 				.fromConfig(Thread.currentThread().getContextClassLoader().getResourceAsStream("kube.config"));
-		io.kubernetes.client.Configuration.setDefaultApiClient(client);
+		Configuration.setDefaultApiClient(client);
 		return client;
 	}
 

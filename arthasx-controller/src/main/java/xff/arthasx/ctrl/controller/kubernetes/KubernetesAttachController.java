@@ -8,7 +8,6 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import xff.arthasx.common.Constants;
@@ -24,6 +23,7 @@ import xff.arthasx.ctrl.kubernetes.KubernetesExec;
  *
  */
 @Controller
+@RequestMapping("ui/v1/arthasx/kubernetes")
 public class KubernetesAttachController extends BaseController {
 
 	@Autowired
@@ -37,7 +37,7 @@ public class KubernetesAttachController extends BaseController {
 		restTemplate = new RestTemplate(simpleClientHttpRequestFactory);
 	}
 
-	@RequestMapping("/attach/kubernetes")
+	@RequestMapping("/attach")
 	public String attach(@RequestParam String namespace, @RequestParam String pod, @RequestParam String containerName,
 			@RequestParam String containerIp, @RequestParam String arthasxhome, @RequestParam String jpsKeywords,
 			HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -63,7 +63,7 @@ public class KubernetesAttachController extends BaseController {
 			}
 			String attachRedirectAddress = attachProperties.getRedirect().getAddress();
 			if (attachRedirectAddress == null) {
-				attachRedirectAddress = request.getLocalAddr();
+				attachRedirectAddress = request.getServerName();
 			}
 			// to arthas web console
 			return "redirect:http://" + attachRedirectAddress + ":" + attachProperties.getRedirect().getTunnelWebPort()

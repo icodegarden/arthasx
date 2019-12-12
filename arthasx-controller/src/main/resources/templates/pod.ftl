@@ -4,7 +4,7 @@
 <body>
 	<h1>welcome , search your pods</h1>
 	
-	<form action="/pods">
+	<form action="/ui/v1/arthasx/kubernetes/pods">
 		<input name="labels" value="${labels}" placeholder="please input pod labels for search, for example:app=app1,node=node1" size="100" >
 		<input type="submit" value="submit">
 	</form>
@@ -49,15 +49,13 @@
 								<#if (pod.status.podIP)??>
 									<#list container.volumeMounts as volumeMount> 
 										<#if volumeMount.name == 'arthasxhome'>
-											<a href="/attach/kubernetes?namespace=${pod.metadata.namespace}&pod=${pod.metadata.name}&containerName=${container.name}&containerIp=${pod.status.podIP}&arthasxhome=${volumeMount.mountPath}&jpsKeywords=${(pod.metadata.annotations.arthasxjpskeywords)!"app.jar"}" target="_blank">Diagnosis</a>
+											<a href="/ui/v1/arthasx/kubernetes/attach?namespace=${pod.metadata.namespace}&pod=${pod.metadata.name}&containerName=${container.name}&containerIp=${pod.status.podIP}&arthasxhome=${volumeMount.mountPath}&jpsKeywords=${(pod.metadata.annotations.arthasxjpskeywords)!"app.jar"}" target="_blank">Diagnosis</a>
 										</#if>
 									</#list>
 								</#if>
 							</td>
 						</#if>				
 					</#list>
-					
-				
 				</tr>
 		    </#list>
 	    </#list>

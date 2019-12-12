@@ -5,11 +5,20 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import xff.arthasx.common.AnsiLog;
+import xff.arthasx.common.Constants;
 import xff.arthasx.common.Result;
+import xff.arthasx.common.util.NamedThreadFactory;
 
 /**
  * 
@@ -29,6 +38,15 @@ public abstract class Exec {
 			+ " --tunnel-server=" + ARTHASATTACH_PLACEHOLDER_TUNNELSERVERADDRESS + " --agent-id="
 			+ ARTHASATTACH_PLACEHOLDER_AGENTID + " --pid=" + ARTHASATTACH_PLACEHOLDER_PID;
 
+	private static final ThreadPoolExecutor CACHED_EXECEXTRACT_THREADPOOL = new ThreadPoolExecutor(
+			Integer.parseInt(System.getProperty(Constants.PROPERTIES_ARTHASX_EXECEXTRACT_COREPOOLSIZE, "0")),
+			Integer.parseInt(System.getProperty(Constants.PROPERTIES_ARTHASX_EXECEXTRACT_MAXPOOLSIZE, "200")), 60,
+			TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new NamedThreadFactory("exec-extract-Threadpool"),
+			new ThreadPoolExecutor.AbortPolicy());
+
+	private static final int EXECEXTRACT_TIMEOUTMILLIS = Integer
+			.parseInt(System.getProperty(Constants.PROPERTIES_ARTHASX_EXECEXTRACT_TIMEOUTMILLIS, "1000"));
+
 	public ExecResult exec(String... cmds) throws IOException {
 		return exec(null, null, null, cmds);
 	}
@@ -43,8 +61,7 @@ public abstract class Exec {
 		// get target jvm pid
 		ExecResult execResult = getJVMPids(jpsKeywords);
 		if (!execResult.isSuccess()) {
-			return Result.builder()
-					.buildFailed("get JVMPid failed, messages:" + execResult.toStringFullMessages());
+			return Result.builder().buildFailed("get JVMPid failed, messages:" + execResult.toStringFullMessages());
 		}
 		List<String> jvmPids = execResult.getLines();
 		if (jvmPids.size() != 1) {
@@ -71,58 +88,134 @@ public abstract class Exec {
 
 	protected abstract ExecResult doArthasAttach(String cmd) throws IOException;
 
-	protected ExecResult extractResponse(Process p, List<String> includes, List<String> excludes, Integer lineIndex)
-			throws IOException {
+	protected ExecResult extractResponse(final Process p, final List<String> includes, final List<String> excludes,
+			final Integer lineIndex) throws IOException {
 		try {
-			try {
-				p.waitFor(3000, TimeUnit.MILLISECONDS);
-			} catch (Exception e) {
-				//
-			}
-			List<String> lines = new ArrayList<String>(0);
-			List<String> fullMessages = new ArrayList<String>(0);
-			BufferedReader reader = null;
-			try {
-				reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-				String line;
-				while ((line = reader.readLine()) != null) {
-					fullMessages.add(line);
-					if (includes != null) {
-						for (String include : includes) {
-							if (!line.contains(include)) {
-								line = null;
-								break;
+			p.waitFor(3000, TimeUnit.MILLISECONDS);
+		} catch (Exception e) {
+			AnsiLog.warn("exec extract wait timeout", e);
+		}
+		Integer exitValue = null;
+		final List<String> lines = new ArrayList<String>(0);
+		final List<String> fullMessages = new ArrayList<String>(0);
+		try {
+			Future<Void> future = CACHED_EXECEXTRACT_THREADPOOL.submit(new Callable<Void>() {
+				@Override
+				public Void call() throws Exception {
+					BufferedReader reader = null;
+					try {
+						reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+						String line;
+						while ((line = reader.readLine()) != null) {
+							fullMessages.add(line);
+							if (includes != null) {
+								for (String include : includes) {
+									if (!line.contains(include)) {
+										line = null;
+										break;
+									}
+								}
 							}
-						}
-					}
-					if (line != null) {
-						if (excludes != null) {
-							for (String exclude : excludes) {
-								if (line.contains(exclude)) {
-									line = null;
-									break;
+							if (line != null) {
+								if (excludes != null) {
+									for (String exclude : excludes) {
+										if (line.contains(exclude)) {
+											line = null;
+											break;
+										}
+									}
+								}
+							}
+							if (line != null) {
+								if (lineIndex != null) {
+									lines.add(line.split("\\s+")[lineIndex]);
+								} else {
+									lines.add(line);
 								}
 							}
 						}
-					}
-					if (line != null) {
-						if (lineIndex != null) {
-							lines.add(line.split("\\s+")[lineIndex]);
-						} else {
-							lines.add(line);
+					} finally {
+						if (reader != null) {
+							reader.close();
 						}
 					}
+					return null;
 				}
-			}finally {
-				if(reader != null) {
-					reader.close();
-				}
-			}
-			return new ExecResult(p.exitValue(), lines, fullMessages);
+			});
+			// timed wait
+			future.get(EXECEXTRACT_TIMEOUTMILLIS, TimeUnit.MILLISECONDS);
+		} catch (RejectedExecutionException e) {
+			exitValue = -1;
+			String msg = "too many attaches current time";
+			lines.add(msg);
+			fullMessages.add(msg);
+		} catch (TimeoutException e) {
+			//
+		} catch (InterruptedException e) {
+			//
+		} catch (ExecutionException e) {
+			throw new RuntimeException(e);
 		} finally {
 			p.destroy();
+			if (exitValue == null) {
+				exitValue = p.exitValue();
+			}
 		}
+		return new ExecResult(exitValue, lines, fullMessages);
 	}
+
+//	protected ExecResult extractResponse(Process p, List<String> includes, List<String> excludes, Integer lineIndex)
+//			throws IOException {
+//		try {
+//			try {
+//				p.waitFor(3000, TimeUnit.MILLISECONDS);
+//			} catch (Exception e) {
+//				//
+//			}
+//			List<String> lines = new ArrayList<String>(0);
+//			List<String> fullMessages = new ArrayList<String>(0);
+//			BufferedReader reader = null;
+//			try {
+//				reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+//				String line;
+//				while ((line = reader.readLine()) != null) {
+//					fullMessages.add(line);
+//					if (includes != null) {
+//						for (String include : includes) {
+//							if (!line.contains(include)) {
+//								line = null;
+//								break;
+//							}
+//						}
+//					}
+//					if (line != null) {
+//						if (excludes != null) {
+//							for (String exclude : excludes) {
+//								if (line.contains(exclude)) {
+//									line = null;
+//									break;
+//								}
+//							}
+//						}
+//					}
+//					if (line != null) {
+//						if (lineIndex != null) {
+//							lines.add(line.split("\\s+")[lineIndex]);
+//						} else {
+//							lines.add(line);
+//						}
+//					}
+//				}
+//			}finally {
+//				if(reader != null) {
+//					reader.close();
+//				}
+//			}
+//			return new ExecResult(p.exitValue(), lines, fullMessages);
+//		} finally {
+//			p.destroy();
+//		}
+//	}
 
 	public static class ExecResult {
 		private int exitValue;

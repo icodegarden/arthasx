@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.models.V1PodList;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1PodList;
 
 /**
  * 
@@ -23,6 +23,7 @@ import io.kubernetes.client.models.V1PodList;
  *
  */
 @Controller
+@RequestMapping("ui/v1/arthasx/kubernetes")
 public class ViewController {
 
 	@Autowired
