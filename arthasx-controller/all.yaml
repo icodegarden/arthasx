@@ -133,3 +133,5 @@ spec:
         env:
         - name: JAVA_OPTS
           value: -Darthasx.attach.redirect.tunnelWebPort=30081 -Darthasx.attach.redirect.tunnelServerPort=30077 
+        - name: TUNNEL_SERVER_JAVA_OPTS
+          value:  
