@@ -52,7 +52,7 @@ public class KubernetesTests {
 	    proc.waitFor();
 	    List<String> sa = new ArrayList<String>();
 		
-	    FutureTask f = new FutureTask<Object>(new Callable() {
+	    FutureTask<Object> f = new FutureTask<Object>(new Callable<Object>() {
 	    	@Override
 	    	public Object call() throws Exception {
 	    		try (BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));) {
@@ -63,12 +63,10 @@ public class KubernetesTests {
 	    		}catch (Exception e) {
 	    			throw new RuntimeException(e);
 				}
-	    		System.out.println(77);
 	    		return sa;
 	    	}
 		});
 	    Thread thread = new Thread(f);
-	    thread.setDaemon(false);
 	    thread.start();
 	    try{
 	    	f.get(1000,TimeUnit.MILLISECONDS);
@@ -78,6 +76,5 @@ public class KubernetesTests {
 	    System.out.println(sa);
 	    
 	    Assert.assertEquals(proc.exitValue(), 0);
-	    Thread.sleep(3000);
 	}
 }

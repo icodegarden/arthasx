@@ -41,8 +41,8 @@ public abstract class Exec {
 	private static final ThreadPoolExecutor CACHED_EXECEXTRACT_THREADPOOL = new ThreadPoolExecutor(
 			Integer.parseInt(System.getProperty(Constants.PROPERTIES_ARTHASX_EXECEXTRACT_COREPOOLSIZE, "0")),
 			Integer.parseInt(System.getProperty(Constants.PROPERTIES_ARTHASX_EXECEXTRACT_MAXPOOLSIZE, "200")), 60,
-			TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new NamedThreadFactory("exec-extract-Threadpool"),
-			new ThreadPoolExecutor.AbortPolicy());
+			TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
+			new NamedThreadFactory("cached-exec-extract-Threadpool"));
 
 	private static final int EXECEXTRACT_TIMEOUTMILLIS = Integer
 			.parseInt(System.getProperty(Constants.PROPERTIES_ARTHASX_EXECEXTRACT_TIMEOUTMILLIS, "1000"));

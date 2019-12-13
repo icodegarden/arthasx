@@ -64,12 +64,6 @@
 							<archive>
 								<manifestEntries>
 									<main-Class>xff.arthasx.daemon.HttpServer</main-Class>
-									<Can-Redefine-Classes>true</Can-Redefine-Classes>
-									<Can-Retransform-Classes>true</Can-Retransform-Classes>
-									<Specification-Title>${project.name}</Specification-Title>
-									<Specification-Version>${project.version}</Specification-Version>
-									<Implementation-Title>${project.name}</Implementation-Title>
-									<Implementation-Version>${project.version}</Implementation-Version>
 								</manifestEntries>
 							</archive>
 						</configuration>

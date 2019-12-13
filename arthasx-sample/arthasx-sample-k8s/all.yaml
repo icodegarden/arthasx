@@ -20,31 +20,12 @@ spec:
         image: arthasx-init
         imagePullPolicy: IfNotPresent
         volumeMounts:
-        - name: arthasxhome
-          mountPath: /var/lib/arthasx
- 
+        - name: arthasxhome #fixed name use for attach
+          mountPath: /var/lib/arthasx #fixed value
       containers: 
       - name: arthasx-sample-k8s
         image: arthasx-sample-k8s
         imagePullPolicy: IfNotPresent
-#        command: 
-#        - /bin/bash
-#        - -c
-#        - echo "starting arthasx-daemon ..." ;
-#          count=0;
-#          max_count=12;
-#          java -jar arthasx-daemon.jar & 
-#          until [[ (( count -ge max_count )) || "$(curl -X GET --silent --connect-timeout 1 --max-time 2 localhost:8079)" == "Hello Arthasx" ]];
-#          do  
-#            printf ".";
-#            sleep 5;
-#          done ;
-#          if [[ (( count -ge max_count )) ]];then
-#            echo "start arthasx-daemon failed";
-#            exit 1;
-#          fi;
-#          echo "arthasx-daemon started" ;
-#          java -Dserver.port=8080 -jar app.jar
         volumeMounts:
         - name: arthasxhome
           mountPath: /opt/arthasx
