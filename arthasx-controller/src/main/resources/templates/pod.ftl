@@ -75,9 +75,9 @@
 									<thead>
 									<tr>
 										<th>pod</th>
-										<th>k8s-container-name</th>
-										<th>containerStatus</th>
-										<th>ip</th>
+										<th>container name</th>
+										<th>container status</th>
+										<th>container ip</th>
 										<th>node</th>
 										<th>action</th>
 										<#if (pod.status.containerStatuses)??>
